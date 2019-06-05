@@ -1,4 +1,7 @@
 const express = require("express");
+const User = require("./src/models/user");
+const Property = require("./src/models/property");
+const Booking = require("./src/models/booking");
 // const logger = require("./src/utilities/middleware/logger");
 
 const app = express();
@@ -9,9 +12,9 @@ app.use(express.urlencoded({ extended: false}));
 
 // app.use("/users", require("./src/api/users-routes"));
 
-var users = new Array();
-var properties = new Array();
-var bookings = new Array();
+// var users = new Array();
+// var properties = new Array();
+// var bookings = new Array();
 
 // adds a new user
 app.post("/users", (req, res) => {
@@ -34,26 +37,10 @@ app.post("/users", (req, res) => {
         return res.status(400).json({message: "Invalid password"});
     }
     
-    var newUser = {
-        id: users.length + 1,
-        firstname: bodyFirstname,
-        lastname: bodyLastname,
-        email: bodyEmail,
-        password: bodyPassword
-    };
-
-    var already_in = false;
-    for (var i = 0; i < users.length; i++) {
-        if (users[i].email == bodyEmail) {
-            already_in = true;
-        }
-    }
-    if (already_in == true) {
-        return res.status(400).json({ message: "This email is already used"});
-    } else {
-        users.push(newUser);
-        res.json(newUser);
-    }
+    
+    User.createUser(user, (err, result) => {
+        return res.status(200).json({id: result});
+    });
 });
 
 // checks that a user can login from the login credentials given
@@ -69,18 +56,9 @@ app.post("/users/authentication", (req, res) => {
         return res.status(400).json({message: "Invalid password"});
     }
 
-    var foundUser = null;
-    for (var i = 0; i < users.length; i++) {
-        if (users[i].email == bodyEmail && users[i].password == bodyPassword) {
-            foundUser = users[i];
-        }
-    }
-    if (foundUser) {
-        res.json(foundUser);
-    } else {
-        return res.status(400).json({ message: "User is not in the database"});
-    }
-
+    User.getUserById(user, (err, result) => {
+        res.json(user);
+    });
 });
 
 // creates a new property
@@ -104,25 +82,17 @@ app.post("/properties", (req, res) => {
         return res.status(400).json({message: "Invalid price"});
     }
 
-    var newProperty = {
-        id: properties.length + 1,
-        name: bodyName,
-        location: bodyLocation,
-        imageUrl: bodyImageUrl,
-        price: bodyPrice
-    };
-    properties.push(newProperty);
-    res.json(newProperty);
+    Property.createProperty(property, (err, result) => {
+        return res.status(200).json({id: result});
+    });
 });
 
 // deletes a property 
 app.delete("/properties/:id", (req, res) => {
     var id = req.params.id;
-    const index = properties
-        .filter(property => property.id == id)
-        .map(property => properties.indexOf(property));
-    properties.splice(index, 1);
-    res.send("DELETE request to properties/:$id");
+    Property.removeProperty(id, (err, result) => {
+        res.send("DELETE request to properties/:$id");
+    });
 });
 
 // retreives the information for a given property id
@@ -136,13 +106,10 @@ app.get("/properties/:id", (req, res) => {
         return res.status(400).json({ message: "Please pass in a property ID" })
     }
     
-    for (var i = 0; i < properties.length; i++) {
-        if (properties[i].id == id) {
-            return res.status(200).json(properties[i]);
-        }
-    }
+    var property = Property.getPropertyById(id, (err, result) => {
 
-    return res.status(400).json({ message: "Property not found"});
+    });
+    return res.status(200).json(property);
 });
 
 // creates a new booking request
@@ -162,44 +129,29 @@ app.post("/properties/:id/bookings", (req, res) => {
     if (!bodyUserId || (typeof bodyUserId !== "number")) {
         return res.status(400).json({message: "Invalid user ID"});
     }
-    if(propId > properties.length) {
-        return res.status(400).json({ message: "This property does not exist" });
-    }
 
-    var newBooking = {
-        id: bookings.length + 1,
-        dateFrom: bodyDateFrom,
-        dateTo: bodyDateTo,
-        userId: bodyUserId,
-        propertyId: propId,
-        status: "NEW"
-    };
-
-    bookings.push(newBooking);
-    res.json(newBooking);
+    Booking.createBooking(booking, (err, result) => {
+        return res.status(200).json({id: result});
+    });
 });
 
 // retrieves a booking request by property by id
-app.get("/properties/:id/bookings", (req, res) => {
-    const propId = req.params.id;
-    var propertyBookings = new Array();
-
-    if (propId > bookings.length) {
-        return res.status(400).json({ message: "This property does not exist"});
-    }
+// app.get("/properties/:id/bookings", (req, res) => {
+//     const propId = req.params.id;
+//     var propertyBookings = new Array();
     
-    for (var i = 0; i < bookings.length; i++) {
-        if (propId == bookings[i].propertyId) {
-            propertyBookings.push(bookings[i]);
-        }
-    }
+//     for (var i = 0; i < bookings.length; i++) {
+//         if (propId == bookings[i].propertyId) {
+//             propertyBookings.push(bookings[i]);
+//         }
+//     }
 
-    if (propertyBookings.length == 0) {
-        return res.status(400).json({ message: "No bookings exist for this property"});
-    } else {
-        res.json(propertyBookings);
-    }
-});
+//     if (propertyBookings.length == 0) {
+//         return res.status(400).json({ message: "No bookings exist for this property"});
+//     } else {
+//         res.json(propertyBookings);
+//     }
+// });
 
 
 app.listen(3000, () => {
