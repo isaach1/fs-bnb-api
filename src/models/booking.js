@@ -1,4 +1,4 @@
-var mysqlConn = require("../database/db");
+var mysqlConn = require("../database/database");
 
 var Booking = function(booking) {
   
