@@ -2,10 +2,11 @@ var mysqlConn = require("../database/database");
 
 var Property = function(property) {
   
-    this.firstname = property.firstname;
-    this.lastname = property.lastname;
-    this.email = property.email;
-    this.password = property.password;
+    this.name = property.name;
+    this.imageUrl = property.imageUrl;
+    this.location = property.location;
+    this.price = property.price;
+    this.providerId = property.providerId;
 };
 
 Property.createProperty = function(newProperty, result) {
@@ -26,7 +27,7 @@ Property.getAllProperties = function(result) {
             console.log("error: ", err);
             result(err, null);
         } else {
-            console.log("Properties : ", res);
+            console.log("Properties: ", res);
             result(null, res);
         }
     });

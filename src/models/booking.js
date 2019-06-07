@@ -2,10 +2,11 @@ var mysqlConn = require("../database/database");
 
 var Booking = function(booking) {
   
-    this.firstname = booking.firstname;
-    this.lastname = booking.lastname;
-    this.email = booking.email;
-    this.password = booking.password;
+    this.dateFrom = booking.dateFrom;
+    this.dateTo = booking.dateTo;
+    this.userId = booking.userId;
+    this.propertyId = booking.propertyId;
+    this.role = booking.role;
 };
 
 Booking.createBooking = function(newBooking, result) {
@@ -34,6 +35,17 @@ Booking.getAllBookings = function(result) {
 
 Booking.getBookingById = function(bookingId, result) {
     mysqlConn.query("Select * from booking where id = ? ", bookingId, function(err,res) {
+        if (err) {
+            console.log("error: ", err);
+            result(err, null);
+        } else {
+            result(null, res);
+        }
+    });
+};
+
+Booking.getBookingsByPropertyId = function(propertyId, result) {
+    mysqlConn.query("Select * from booking where propertyId = ?", propertyId, function(err, res) {
         if (err) {
             console.log("error: ", err);
             result(err, null);

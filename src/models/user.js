@@ -6,6 +6,7 @@ var User = function(user) {
     this.lastname = user.lastname;
     this.email = user.email;
     this.password = user.password;
+    this.role = user.role;
 };
 
 User.createUser = function(newUser, result) {
@@ -14,7 +15,7 @@ User.createUser = function(newUser, result) {
             console.log("error: ", err);
             result(err, null);
         } else {
-            console.log(res.insertId);
+            console.log(result);
             result(null, res.insertId);
         }
     });
@@ -32,8 +33,8 @@ User.getAllUsers = function(result) {
     });
 };
 
-User.getUserById = function(userId, result) {
-    mysqlConn.query("Select * from user where id = ? ", userId, function(err,res) {
+User.getUserByEmail = function(userEmail, result) {
+    mysqlConn.query("Select * from user where email = ?", userEmail, function(err,res) {
         if (err) {
             console.log("error: ", err);
             result(err, null);
