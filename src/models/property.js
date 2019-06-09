@@ -28,13 +28,24 @@ Property.getAllProperties = function(result) {
             result(err, null);
         } else {
             console.log("Properties: ", res);
-            result(null, res);
+            result(res, null);
         }
     });
 };
 
 Property.getPropertyById = function(propertyId, result) {
     mysqlConn.query("Select * from property where id = ? ", propertyId, function(err,res) {
+        if (err) {
+            console.log("error: ", err);
+            result(err, null);
+        } else {
+            result(null, res);
+        }
+    });
+};
+
+Property.getPropertyByProviderId = function(providerId, result) {
+    mysqlConn.query("Select * from property where providerId = ? ", providerId, function(err,res) {
         if (err) {
             console.log("error: ", err);
             result(err, null);

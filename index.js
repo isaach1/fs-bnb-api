@@ -2,6 +2,7 @@ const express = require("express");
 const User = require("./src/models/user");
 const Property = require("./src/models/property");
 const Booking = require("./src/models/booking");
+const Provider = require("./src/models/provider");
 const cors = require('cors');
 // const logger = require("./src/utilities/middleware/logger");
 
@@ -74,10 +75,127 @@ app.post("/users/authentication", (req, res) => {
             return res.status(404).json({message: "User not found"});
         } else if (!err) {
             if (result[0].password === bodyPassword) {
-                return res.json(result); 
+                const userResponse = {
+                    id: result[0].id,
+                    firstname: result[0].firstname,
+                    lastname: result[0].lastname,
+                    email: result[0].email
+                };
+                return res.json(userResponse); 
             } else {
                 return res.status(404).json({message: "Incorrect password please try again"});
             }
+        }
+    });
+});
+
+// returns profile of user with given id
+app.get("/users/:id", (req, res) => {
+    const id = req.params.id;
+    const parseUserId = parseInt(id);
+    if (isNaN(parseUserId)) {
+        return res.status(400).json({ message: "Integer Expected" });
+    }
+    if (!id) {
+        return res.status(400).json({ message: "Please pass in a user ID" })
+    }
+    
+    User.getUserById(parseUserId, (err, result) => {
+        if (err || result.length == 0) {
+            return res.status(400).json({message: "User not found"});
+        } else {
+            res.json(result);
+        }
+    });
+});
+
+// creates a new provider 
+app.post("/providers", (req, res) => {
+    const provider = req.body;
+    const bodyFirstname = provider.firstname;
+    const bodyLastname = provider.lastname;
+    const bodyEmail = provider.email;
+    const bodyPassword = provider.password;
+    const bodyRole = provider.role;
+    
+    if (!bodyFirstname) {
+        return res.status(400).json({message: "Invalid first name"});
+    }
+    if (!bodyLastname) {
+        return res.status(400).json({message: "Invalid last name"});
+    }
+    if (!bodyEmail) {
+        return res.status(400).json({message: "Invalid email"});
+    }
+    if (!bodyPassword) {
+        return res.status(400).json({message: "Invalid password"});
+    }
+    if (!bodyRole) {
+        return res.status(400).json({message: "Invalid role"});
+    }
+    
+    
+    Provider.createProvider(provider, (err, result) => {
+        if (err) {
+            if (err.code === "ER_DUP_ENTRY") {
+                return res.status(400).json({message: err.sqlMessage});
+            } else {
+                return res.status(500).json({message: "Failed to insert, try again"});
+            }
+        }
+        return res.status(200).json({id: result});
+    });
+});
+
+// checks that a provider can login from the login credentials given
+app.post("/providers/authentication", (req, res) => {
+    const provider = req.body;
+    const bodyEmail = provider.email;
+    const bodyPassword = provider.password;
+
+    if (!bodyEmail) {
+        return res.status(400).json({message: "Invalid email"});
+    }
+    if (!bodyPassword) {
+        return res.status(400).json({message: "Invalid password"});
+    }
+
+    Provider.getProviderByEmail(bodyEmail, (err, result) => {
+        if (err || result.length == 0) {
+            return res.status(404).json({message: "Provider not found"});
+        } else if (!err) {
+            if (result[0].password === bodyPassword) {
+                const providerResponse = {
+                    id: result[0].id,
+                    firstname: result[0].firstname,
+                    lastname: result[0].lastname,
+                    email: result[0].email
+                };
+                return res.json(providerResponse); 
+            } else {
+                return res.status(404).json({message: "Incorrect password please try again"});
+            }
+        }
+    });
+});
+
+// returns the details for a given provider
+app.get("/providers/:id", (req, res) => {
+    const id = req.params.id;
+    const parseProviderId = parseInt(id);
+    if (isNaN(parseProviderId)) {
+        return res.status(400).json({ message: "Integer Expected" });
+    }
+    if (!id) {
+        return res.status(400).json({ message: "Please pass in a user ID" })
+    }
+    
+    Provider.getProviderById(parseProviderId, (err, result) => {
+        if (err || result.length == 0) {
+            return res.status(400).json({message: "User not found"});
+        } else {
+            // console.log(result);
+            res.json(result);
         }
     });
 });
@@ -100,10 +218,10 @@ app.post("/properties", (req, res) => {
     if (!bodyImageUrl) {
         return res.status(400).json({message: "Invalid image"});
     }
-    if (!bodyPrice || (typeof bodyPrice !== "number")) {
+    if (!bodyPrice || (typeof bodyPrice !== "string")) {
         return res.status(400).json({message: "Invalid price"});
     }
-    if (!bodyProviderId || (typeof bodyProviderId !== "number")) {
+    if (!bodyProviderId || (typeof bodyProviderId !== "string")) {
         return res.status(400).json({message: "Invalid provider ID"});
     }
 
@@ -112,11 +230,35 @@ app.post("/properties", (req, res) => {
     });
 });
 
+// returns all properties in the database
+app.get("/properties", (req, res) => {
+    Property.getAllProperties(result => {
+        console.log(result);
+        return res.json(result);
+    });
+});
+
+// returns all properties for a given provider ID
+app.get("/properties/all/:id", (req, res) => {
+    var providerId = req.params.id;
+    const parseProviderId = parseInt(providerId);
+    if (isNaN(parseProviderId)) {
+        return res.status(400).json({ message: "Integer Expected" });
+    }
+    if (!providerId) {
+        return res.status(400).json({ message: "Please pass in a provider ID" })
+    }
+    Property.getPropertyByProviderId(parseProviderId, (err, result) => {
+        console.log(result);
+        res.json(result);
+    });
+});
+
 // deletes a property 
 app.delete("/properties/:id", (req, res) => {
     var id = req.params.id;
     Property.removeProperty(id, (err, result) => {
-        res.send({"deleted id: ": result});
+        res.json(result);
     });
 });
 
@@ -136,6 +278,11 @@ app.get("/properties/:id", (req, res) => {
     });
 });
 
+// // updates information for a given property
+// app.patch("/properties", (req, res) => {
+
+// })
+
 // creates a new booking request
 app.post("/properties/:id/bookings", (req, res) => {
     var booking = req.body;
@@ -151,7 +298,7 @@ app.post("/properties/:id/bookings", (req, res) => {
     // if (!bodyDateTo || (typeof bodyDateTo !== "date")) {
     //     return res.status(400).json({message: "Invalid ending date"});
     // }
-    if (!bodyUserId || (typeof bodyUserId !== "number")) {
+    if (!bodyUserId || (typeof bodyUserId !== "string")) {
         return res.status(400).json({message: "Invalid user ID"});
     }
     if (!propId) {
