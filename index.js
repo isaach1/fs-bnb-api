@@ -109,6 +109,13 @@ app.get("/users/:id", (req, res) => {
     });
 });
 
+// returns all users in the database
+app.get("/users", (req, res) => {
+    User.getAllUsers((err, result) => {
+        res.json(result);
+    });
+});
+
 // creates a new provider 
 app.post("/providers", (req, res) => {
     const provider = req.body;
@@ -325,6 +332,15 @@ app.post("/properties/:id/bookings", (req, res) => {
 app.get("/properties/:id/bookings", (req, res) => {
     const propId = req.params.id;
     Booking.getBookingsByPropertyId(propId, (err, result) => {
+        res.json(result);
+    });
+});
+
+// returns all bookings in the database
+app.get("/all/bookings", (req, res) => {
+    console.log("in here");
+    Booking.getAllBookings((err, result) => {
+        console.log(result);
         res.json(result);
     });
 });
